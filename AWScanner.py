@@ -43,15 +43,21 @@ try:
     else:
         print (f"FAIL: {bucket['Name']} RestrictPublicBuckets is disabled")
 
+
+    try:
+        encryption = s3.get_bucket_encryption(Bucket=bucket['Name'])
+        algorithm = encryption['ServerSideEncryptionConfiguration']['Rules'][0]['ApplyServerSideEncryptionByDefault']['SSEAlgorithm']
+        if algorithm:
+            print (f"PASS: {bucket['Name']} Encryption Enabled with {algorithm}")
+    except ClientError as e:
+        if e.response ['Error']['Code'] == 'ServerSideEncryptionConfigurationNotFound':
+            print (f"FAIL: {bucket['Name']} Encryption Disabled {e.response['Error']['Code']}")    
+
+
 except ClientError as e:
-    print (f"Failed to list buckets: {e}")      
-
-try:
-    encryption = s3.get_bucket_encryption(Bucket=bucket['Name'])
-    if encryption['ServerSideEncryptionConfiguration']['Rules'][0]['ApplyServerSideEncryptionByDefault']['SSEAlgorithm']:
-        print (f"PASS: {bucket['Name']} Encryption Enabled with {encryption['ServerSideEncryptionConfiguration']['Rules'][0]['ApplyServerSideEncryptionByDefault']['SSEAlgorithm']}")
+    print (f"Failed to list buckets: {e}")  
+    
+    
 
 
-except ClientError as e:
-    if e.response ['Error']['Code'] == 'ServerSideEncryptionConfigurationNotFound':
-        print (f"FAIL: {bucket['Name']} Encryption Disabled {e.response['Error']['Code']}")
+
