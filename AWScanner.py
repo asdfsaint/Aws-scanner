@@ -18,41 +18,53 @@ try:
     response = s3.list_buckets()
     for bucket in response['Buckets']:
         print(bucket['Name'])
-
-    public_access = s3.get_public_access_block(Bucket=bucket['Name'])
-    if public_access['PublicAccessBlockConfiguration']['BlockPublicAcls']:
-        print (f"PASS: {bucket['Name']} BlockPublicAcls is enabled")
-    else:
-        print (f"FAIL: {bucket['Name']} BlockPublicAcls is disabled")
+    try:
+        public_access = s3.get_public_access_block(Bucket=bucket['Name'])
+        if public_access['PublicAccessBlockConfiguration']['BlockPublicAcls']:
+            print (f"PASS: {bucket['Name']} BlockPublicAcls is enabled")
+        else:
+            print (f"FAIL: {bucket['Name']} BlockPublicAcls is disabled")
     
-    if public_access['PublicAccessBlockConfiguration']['IgnorePublicAcls']:
-        print(f"PASS: {bucket['Name']} IgnorePublicAcls is enabled")
+        if public_access['PublicAccessBlockConfiguration']['IgnorePublicAcls']:
+            print(f"PASS: {bucket['Name']} IgnorePublicAcls is enabled")
     
-    else:
-        print (f"FAIL:{bucket['Name']} IgnorePublicAcls is disabled")
+        else:
+            print (f"FAIL:{bucket['Name']} IgnorePublicAcls is disabled")
 
-    if public_access['PublicAccessBlockConfiguration']['BlockPublicPolicy']:
-        print(f"PASS: {bucket['Name']} BlockPublicPolicy is enabled")
+        if public_access['PublicAccessBlockConfiguration']['BlockPublicPolicy']:
+            print(f"PASS: {bucket['Name']} BlockPublicPolicy is enabled")
     
-    else:
-        print (f"FAIL: {bucket['Name']} BlockPublicPolicy is disabled")
+        else:
+            print (f"FAIL: {bucket['Name']} BlockPublicPolicy is disabled")
 
-    if public_access['PublicAccessBlockConfiguration']['RestrictPublicBuckets']:
-        print (f"PASS: {bucket['Name']} RestrictPublicBuckets is enabled")
+        if public_access['PublicAccessBlockConfiguration']['RestrictPublicBuckets']:
+            print (f"PASS: {bucket['Name']} RestrictPublicBuckets is enabled")
     
-    else:
-        print (f"FAIL: {bucket['Name']} RestrictPublicBuckets is disabled")
+        else:
+            print (f"FAIL: {bucket['Name']} RestrictPublicBuckets is disabled")
 
+    except ClientError as e:
+        if e.response ['Error']['Code'] == 'NoSuchPublicAccessBlockConfiguration':
+            print (f"FAIL: {bucket['Name']} NoPublicaccess {e.response ['Error']['Code']}")
+        
+        else:
+            print (f"FAIL: {bucket['Name']} {e.response ['Error']['Code']}")
+    
+            
+
+    
+    
+    
 
     try:
         encryption = s3.get_bucket_encryption(Bucket=bucket['Name'])
         algorithm = encryption['ServerSideEncryptionConfiguration']['Rules'][0]['ApplyServerSideEncryptionByDefault']['SSEAlgorithm']
-        if algorithm:
-            print (f"PASS: {bucket['Name']} Encryption Enabled with {algorithm}")
+        print (f"PASS: {bucket['Name']} Encryption Enabled with {algorithm}")
     except ClientError as e:
         if e.response ['Error']['Code'] == 'ServerSideEncryptionConfigurationNotFound':
-            print (f"FAIL: {bucket['Name']} Encryption Disabled {e.response['Error']['Code']}")    
-
+            print (f"FAIL: {bucket['Name']} Encyrption Disabled {e.response['Error']['Code']}")    
+        else:
+            print (f"FAIL: {bucket['Name']}{e.response['Error']['Code']}")
 
 except ClientError as e:
     print (f"Failed to list buckets: {e}")  
